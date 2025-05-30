@@ -14,10 +14,9 @@ const headers = {
 };
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the AI Calorie Tracker API!');
+    res.send('Welcome to the OpenAI API Interface!');
 });
 
-// Endpoint for text-based analysis (e.g., user enters meal description)
 app.post('/api/message', async (req, res) => {
     const { messages, model, max_tokens } = req.body;
 
@@ -35,7 +34,6 @@ app.post('/api/message', async (req, res) => {
     }
 });
 
-// Endpoint for image-based food analysis
 app.post('/api/analyze-image', async (req, res) => {
     const { image, prompt } = req.body;
 
