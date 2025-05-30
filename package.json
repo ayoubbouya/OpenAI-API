@@ -1,5 +1,5 @@
 {
-  "name": "ai-chat-api",
+  "name": "openai-api-interface",
   "version": "1.0.0",
   "description": "Node.js API to interface with OpenAI's API",
   "main": "app.js",
