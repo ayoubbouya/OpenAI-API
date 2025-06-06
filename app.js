@@ -9,9 +9,9 @@ app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 
-// OpenAI API Endpoints
+// URLs
 const CHAT_API_URL = "https://api.openai.com/v1/chat/completions";
-const IMAGE_GEN_API_URL = "https://api.openai.com/v1/images/generations";
+const IMAGE_GEN_API_URL = "https://api.openai.com/v1/responses";
 
 const headers = {
     'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -20,74 +20,28 @@ const headers = {
 
 // Root
 app.get('/', (req, res) => {
-    res.send('✅ Unified AI API (Chat, Vision, Image Generation) is running.');
+    res.send('Welcome to the AI API Interface (Chat, Vision, Image Generation)');
 });
 
-// Smart Chat/Image Endpoint
+// Chat endpoint
 app.post('/api/message', async (req, res) => {
     const { messages, model, max_tokens } = req.body;
 
-    // Validation
-    if (!Array.isArray(messages) || messages.length === 0) {
-        return res.status(400).json({ error: 'Missing or invalid messages array.' });
-    }
-
-    if (typeof model !== 'string' || !model.trim()) {
-        return res.status(400).json({ error: 'Missing or invalid model.' });
-    }
-
-    if (typeof max_tokens !== 'number' || max_tokens <= 0) {
-        return res.status(400).json({ error: 'Missing or invalid max_tokens.' });
-    }
-
-    const lastMessage = messages[messages.length - 1];
-    const lastText = lastMessage?.content?.find(c => c.type === 'text')?.text || "";
-
-    // Regex-based intent detection
-    const shouldGenerateImage = /generate.*image|create.*image|make.*image|draw.*image/i.test(lastText);
-
     try {
-        if (shouldGenerateImage) {
-            const imagePayload = {
-                model: 'gpt-4.1-mini',
-                input: lastText,
-                tools: [{ type: 'image_generation' }]
-            };
+        const response = await axios.post(CHAT_API_URL, {
+            model,
+            messages,
+            max_tokens
+        }, { headers });
 
-            const response = await axios.post(IMAGE_GEN_API_URL, imagePayload, { headers });
-            const outputs = response.data.output || [];
-
-            const imageData = outputs.find(o => o.type === 'image_generation_call')?.result;
-
-            if (!imageData) {
-                return res.status(500).json({ error: 'No image data returned from OpenAI.' });
-            }
-
-            return res.json({
-                type: 'image',
-                imageBase64: imageData
-            });
-        }
-
-        // Standard Chat Response
-        const chatPayload = { model, messages, max_tokens };
-        const response = await axios.post(CHAT_API_URL, chatPayload, { headers });
-
-        return res.json({
-            type: 'chat',
-            ...response.data
-        });
-
+        res.json(response.data);
     } catch (error) {
-        console.error("Unified AI API Error:", error.response?.data || error.message);
-        return res.status(500).json({
-            error: "Unified AI API request failed.",
-            details: error.response?.data || error.message
-        });
+        console.error('Message API Error:', error.response?.data || error.message);
+        res.status(500).json({ error: 'Failed to fetch response from OpenAI' });
     }
 });
 
-// Vision (Image + Prompt)
+// Vision endpoint
 app.post('/api/analyze-image', async (req, res) => {
     const { image, prompt } = req.body;
 
@@ -116,17 +70,54 @@ app.post('/api/analyze-image', async (req, res) => {
 
     try {
         const response = await axios.post(CHAT_API_URL, payload, { headers });
-        return res.status(200).json(response.data);
+        res.status(200).json(response.data);
     } catch (error) {
-        console.error("Vision API Error:", error.response?.data || error.message);
-        return res.status(500).json({
-            error: "Vision API request failed.",
+        console.error("Image Analysis Error:", error.response?.data || error.message);
+        res.status(500).json({
+            error: 'OpenAI Vision API request failed.',
             details: error.response?.data || error.message
         });
     }
 });
 
-// Start Server
+// Image generation endpoint
+app.post('/api/generate-image', async (req, res) => {
+    const { prompt } = req.body;
+
+    if (typeof prompt !== 'string' || !prompt.trim()) {
+        return res.status(400).json({ error: 'Invalid or missing prompt.' });
+    }
+
+    const payload = {
+        model: 'gpt-4.1-mini',
+        input: prompt,
+        tools: [{ type: 'image_generation' }]
+    };
+
+    try {
+        const response = await axios.post(IMAGE_GEN_API_URL, payload, { headers });
+        const outputs = response.data.output || [];
+
+        const imageData = outputs.find(item => item.type === 'image_generation_call')?.result;
+
+        if (!imageData) {
+            return res.status(500).json({ error: 'No image data found in response.' });
+        }
+
+        res.json({
+            message: 'Image generated successfully.',
+            imageBase64: imageData
+        });
+
+    } catch (error) {
+        console.error('Image Generation Error:', error.response?.data || error.message);
+        res.status(500).json({
+            error: 'Failed to generate image.',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
 app.listen(PORT, () => {
-    console.log(`✅ Unified AI API running on port ${PORT}`);
+    console.log(`Unified AI API running on port ${PORT}`);
 });
