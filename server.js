@@ -6,7 +6,7 @@ const {
     handleChatMessage,
     handleImageAnalysis,
     handleImageGeneration
-} = require('./src/controllers/openaiController');
+} = require('./controllers/openaiController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
