@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 
 // OpenAI API Endpoints
 const CHAT_API_URL = "https://api.openai.com/v1/chat/completions";
-const IMAGE_GEN_API_URL = "https://api.openai.com/v1/responses";
+const IMAGE_GEN_API_URL = "https://api.openai.com/v1/images/generations";
 
 const headers = {
     'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
