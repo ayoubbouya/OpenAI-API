@@ -1,17 +1,21 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('express').json;
 
-const { handleChatMessage, handleImageAnalysis, handleImageGeneration } = require('./src/controllers/openaiController');
+const {
+    handleChatMessage,
+    handleImageAnalysis,
+    handleImageGeneration
+} = require('./src/controllers/openaiController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
-app.use(bodyParser({ limit: '25mb' }));
+app.use(express.json({ limit: '25mb' }));
 
-// Health check
+// Health Check
 app.get('/', (_, res) => {
     res.send('✅ AI API Interface is running (Chat, Vision, Image Generation)');
 });
@@ -21,7 +25,7 @@ app.post('/api/message', handleChatMessage);
 app.post('/api/analyze-image', handleImageAnalysis);
 app.post('/api/generate-image', handleImageGeneration);
 
-// Start server
+// Start Server
 app.listen(PORT, () => {
     console.log(`🚀 Unified AI API is running on port ${PORT}`);
 });
